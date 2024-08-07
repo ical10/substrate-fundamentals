@@ -2,12 +2,22 @@ mod balances;
 mod support;
 mod system;
 
+// Concrete types useful in our simple state machine.
+// Modules are configured for these types directly,
+// and they satisfy all of our trait requirements.
 mod types {
+	use crate::RuntimeCall;
+
 	pub type AccountId = String;
 	pub type Balance = u128;
 	pub type BlockNumber = u32;
 	pub type Nonce = u32;
+	pub type Extrinsic = crate::support::Extrinsic<AccountId, RuntimeCall>;
+	pub type Header = crate::support::Header<BlockNumber>;
+	pub type Block = crate::support::Block<Header, Extrinsic>;
 }
+
+pub enum RuntimeCall {}
 
 #[derive(Debug)]
 pub struct Runtime {
