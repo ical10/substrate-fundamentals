@@ -1,6 +1,6 @@
 pub struct Block<Header, Extrinsic> {
 	pub header: Header,
-	pub extrinsics: Vec<Extrinsics>,
+	pub extrinsics: Vec<Extrinsic>,
 }
 
 pub struct Header<BlockNumber> {
@@ -12,10 +12,10 @@ pub struct Extrinsic<Caller, Call> {
 	pub call: Call,
 }
 
-pub type DispatchableResult = Result<(), &'static str>;
-
 pub trait Dispatch {
 	type Caller;
 	type Call;
 	fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchableResult;
 }
+
+pub type DispatchableResult = Result<(), &'static str>;
