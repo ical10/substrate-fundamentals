@@ -5,9 +5,31 @@ pub trait Config: crate::system::Config {
 	type Balance: CheckedAdd + CheckedSub + Zero + Copy;
 }
 
+pub enum Call<T: Config> {
+	Transfer { to: T::AccountId, amount: T::Balance },
+}
+
 #[derive(Debug)]
 pub struct Pallet<T: Config> {
 	balances: BTreeMap<T::AccountId, T::Balance>,
+}
+
+impl<T: Config> crate::support::Dispatch for Pallet<T> {
+	type Caller = T::AccountId;
+	type Call = Call<T>;
+
+	fn dispatch(
+		&mut self,
+		caller: Self::Caller,
+		call: Self::Call,
+	) -> crate::support::DispatchResult {
+		match call {
+			Call::Transfer { to, amount } => {
+				self.transfer(caller, to, amount)?;
+			},
+		}
+		Ok(())
+	}
 }
 
 impl<T: Config> Pallet<T> {

@@ -21,7 +21,7 @@ mod types {
 }
 
 pub enum RuntimeCall {
-	BalancesTransfer { to: types::AccountId, amount: types::Balance },
+	Balances(balances::Call<Runtime>),
 }
 
 #[derive(Debug)]
@@ -55,8 +55,8 @@ impl crate::support::Dispatch for Runtime {
 		runtime_call: Self::Call,
 	) -> support::DispatchResult {
 		match runtime_call {
-			RuntimeCall::BalancesTransfer { to, amount } => {
-				self.balances.transfer(caller, to, amount)?;
+			RuntimeCall::Balances(call) => {
+				self.balances.dispatch(caller, call)?;
 			},
 		}
 		Ok(())
@@ -97,27 +97,33 @@ impl Runtime {
 }
 
 fn main() {
+	// Create a new instance of the Runtime,
+	// with all the modules it uses.
 	let mut runtime = Runtime::new();
 	let alice = "alice".to_string();
 	let bob = "bob".to_string();
 	let charlie = "charlie".to_string();
 
+	// Initialize the system with some initial balance.
 	runtime.balances.set_balance(&"alice".to_string(), 100);
 
-	// Start emulating a block
-	runtime.system.inc_block_number();
-	assert_eq!(runtime.system.block_number(), 1);
+	// Create a block and an extrinsic
+	let block_1 = types::Block {
+		header: support::Header { block_number: 1 },
+		extrinsics: vec![
+			support::Extrinsic {
+				caller: alice.clone(),
+				call: RuntimeCall::Balances(balances::Call::Transfer { to: bob, amount: 30 }),
+			},
+			support::Extrinsic {
+				caller: alice.clone(),
+				call: RuntimeCall::Balances(balances::Call::Transfer { to: charlie, amount: 50 }),
+			},
+		],
+	};
 
-	// First transaction
-	runtime.system.inc_nonce(&alice);
-	let _res = runtime
-		.balances
-		.transfer(alice.clone(), bob, 30)
-		.map_err(|e| eprintln!("{}", e));
-
-	// Second transaction
-	runtime.system.inc_nonce(&alice);
-	let _res = runtime.balances.transfer(alice, charlie, 20).map_err(|e| eprintln!("{}", e));
+	// execute first block, otherwise panic with "invalid block"
+	runtime.execute_block(block_1).expect("invalid block");
 
 	println!("{:#?}", runtime);
 }
