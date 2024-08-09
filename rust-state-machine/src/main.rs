@@ -19,16 +19,19 @@ mod types {
 	pub type Extrinsic = crate::support::Extrinsic<AccountId, RuntimeCall>;
 	pub type Header = crate::support::Header<BlockNumber>;
 	pub type Block = crate::support::Block<Header, Extrinsic>;
+	pub type Content = &'static str;
 }
 
 pub enum RuntimeCall {
 	Balances(balances::Call<Runtime>),
+	ProofOfExistence(proof_of_existence::Call<Runtime>),
 }
 
 #[derive(Debug)]
 pub struct Runtime {
 	system: system::Pallet<Self>,
 	balances: balances::Pallet<Self>,
+	poe: proof_of_existence::Pallet<Self>,
 }
 
 impl system::Config for Runtime {
@@ -39,6 +42,10 @@ impl system::Config for Runtime {
 
 impl balances::Config for Runtime {
 	type Balance = types::Balance;
+}
+
+impl proof_of_existence::Config for Runtime {
+	type Content = types::Content;
 }
 
 impl crate::support::Dispatch for Runtime {
@@ -59,6 +66,9 @@ impl crate::support::Dispatch for Runtime {
 			RuntimeCall::Balances(call) => {
 				self.balances.dispatch(caller, call)?;
 			},
+			RuntimeCall::ProofOfExistence(call) => {
+				self.poe.dispatch(caller, call)?;
+			},
 		}
 		Ok(())
 	}
@@ -66,7 +76,11 @@ impl crate::support::Dispatch for Runtime {
 
 impl Runtime {
 	fn new() -> Self {
-		Self { balances: balances::Pallet::new(), system: system::Pallet::new() }
+		Self {
+			balances: balances::Pallet::new(),
+			system: system::Pallet::new(),
+			poe: proof_of_existence::Pallet::new(),
+		}
 	}
 
 	fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
