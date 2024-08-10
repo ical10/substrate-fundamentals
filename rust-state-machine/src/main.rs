@@ -128,7 +128,10 @@ fn main() {
 		extrinsics: vec![
 			support::Extrinsic {
 				caller: alice.clone(),
-				call: RuntimeCall::Balances(balances::Call::Transfer { to: bob, amount: 30 }),
+				call: RuntimeCall::Balances(balances::Call::Transfer {
+					to: bob.clone(),
+					amount: 30,
+				}),
 			},
 			support::Extrinsic {
 				caller: alice.clone(),
@@ -137,8 +140,46 @@ fn main() {
 		],
 	};
 
-	// execute first block, otherwise panic with "invalid block"
+	let block_2 = types::Block {
+		header: support::Header { block_number: 2 },
+		extrinsics: vec![
+			support::Extrinsic {
+				caller: alice.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+					claim: &"Hello, world!",
+				}),
+			},
+			support::Extrinsic {
+				caller: bob.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim {
+					claim: &"Hello, world!",
+				}),
+			},
+		],
+	};
+
+	let block_3 = types::Block {
+		header: support::Header { block_number: 3 },
+		extrinsics: vec![
+			support::Extrinsic {
+				caller: alice.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::RevokeClaim {
+					claim: &"Hello, world!",
+				}),
+			},
+			support::Extrinsic {
+				caller: bob.clone(),
+				call: RuntimeCall::ProofOfExistence(proof_of_existence::Call::CreateClaim {
+					claim: &"Hello, world!",
+				}),
+			},
+		],
+	};
+
+	// execute blocks, otherwise panic with "invalid block"
 	runtime.execute_block(block_1).expect("invalid block");
+	runtime.execute_block(block_2).expect("invalid block");
+	runtime.execute_block(block_3).expect("invalid block");
 
 	println!("{:#?}", runtime);
 }
